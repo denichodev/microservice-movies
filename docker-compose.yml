@@ -1,0 +1,33 @@
+version: '2.1'
+
+services:
+
+  micromovies-users-db:
+    container_name: micromovies-users-db
+    build: ./services/users/src/db
+    ports:
+      - '5433:5432'
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    healthcheck:
+      test: exit 0
+
+  micromovies-users-service:
+    container_name: micromovies-users-service
+    build: ./services/users
+    volumes:
+      - './services/users:/usr/src/app'
+      - './services/users/package.json:/usr/src/package.json'
+    ports:
+      - '3000:3000'
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@micromovies-users-db:5432/users_dev
+      - DATABASE_TEST_URL=postgres://postgres:postgres@micromovies-users-db:5432/users_test
+      - NODE_ENV=${NODE_ENV}
+      - TOKEN_SECRET=dencho
+    depends_on:
+      micromovies-users-db:
+        condition: service_healthy
+    links:
+      - micromovies-users-db
